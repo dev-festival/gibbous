@@ -1,0 +1,30 @@
+# Credentials and machine-local configuration
+.env
+.env.*
+!.env.example
+*.local
+*.pem
+*.key
+*.p12
+*.pfx
+.npmrc
+.netrc
+.aws/
+.codex/
+.agents/
+.vscode/
+.idea/
+
+# Personal inputs and generated reports
+private/
+birth-details/
+output/
+downloads/
+*.pdf
+
+# Local caches and operating system files
+__pycache__/
+.venv/
+*.log
+.DS_Store
+Thumbs.db

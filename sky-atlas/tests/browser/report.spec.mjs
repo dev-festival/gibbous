@@ -1,0 +1,63 @@
+import {test,expect} from '@playwright/test';
+import {mkdirSync,readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+test('confirm a searched location, preview three sheets and open the downloaded PDF',async({page},testInfo)=>{
+  await page.goto('/');
+  await page.locator('#city').fill('Lawrenceville');
+  await page.locator('#matches button').filter({hasText:'Georgia'}).click();
+  await page.locator('#date').fill('1987-07-14');
+  await page.locator('#time').fill('07:15');
+  await page.getByLabel('Confirm this location').check();
+  await page.getByRole('button',{name:'Generate report'}).click();
+  await expect(page.locator('#kind')).toHaveText('YOUR REPORT');
+  await page.screenshot({path:testInfo.outputPath('studio.png')});
+  for(const [j,name] of ['Calendar','Artist reference','Source data'].entries()){
+    await page.locator('#tabs').getByRole('button',{name,exact:true}).click();
+    await expect(page.locator('#sheets > svg').nth(j)).toBeVisible();
+  }
+  await expect(page.locator('#sheets > svg').nth(2)).toContainText('1987-07-14 11:15:00 UTC');
+  const download=page.waitForEvent('download');
+  await page.getByRole('button',{name:'Download PDF'}).click();
+  const file=await download;
+  mkdirSync('output/pdf',{recursive:true});
+  const path='output/pdf/'+file.suggestedFilename();
+  await file.saveAs(path);
+  const bytes=readFileSync(path);
+  expect(bytes.subarray(0,5).toString()).toBe('%PDF-');
+  expect(bytes.toString('latin1').match(/\/Type \/Page\b/g)).toHaveLength(3);
+  const prefix=testInfo.outputPath('opened-page');
+  execFileSync('pdftoppm',['-png','-scale-to','960',path,prefix]);
+  for(let i=1;i<=3;i++)expect(readFileSync(prefix+'-'+i+'.png').readUInt32BE(0)).toBe(0x89504e47);
+});
+test('reject spring gap, resolve autumn fold and change birthplace',async({page})=>{
+  await page.goto('/');
+  await page.locator('#city').fill('New York');
+  await page.locator('#matches button').first().click();
+  await page.locator('#time').fill('02:30');
+  await page.locator('#date').fill('2024-03-10');
+  await expect(page.locator('#error')).toContainText('skipped');
+  await page.locator('#date').fill('2024-11-03');
+  await page.locator('#time').fill('01:30');
+  await expect(page.locator('#fold')).toBeVisible();
+  await page.locator('#occurrence').selectOption('1');
+  await page.locator('#confirm').check();
+  await page.getByRole('button',{name:'Generate report'}).click();
+  await expect(page.locator('#sheets > svg').nth(2)).toContainText('2024-11-03 06:30:00 UTC');
+  await expect(page.locator('#sheets > svg').nth(2)).toContainText('Independent source comparison has not been run');
+  await page.setViewportSize({width:375,height:800});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+});
+test('manual coordinates generate a polar report with missing events',async({page})=>{
+  await page.goto('/');
+  await page.locator('#date').fill('2020-12-21');
+  await page.locator('#manual summary').click();
+  await page.locator('#lat').fill('78.2232');
+  await page.locator('#lon').fill('15.6469');
+  await page.locator('#zone').selectOption('Arctic/Longyearbyen');
+  await page.locator('#confirm').check();
+  await page.getByRole('button',{name:'Generate report'}).click();
+  await expect(page.locator('#reportTitle')).toHaveText('December 2020');
+  await expect(page.locator('#sheets > svg').nth(2)).toContainText('Arctic/Longyearbyen');
+  await expect(page.locator('#sheets > svg').nth(2)).toContainText('—');
+});
+
