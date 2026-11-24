@@ -29,7 +29,7 @@ The initial preview is the Lawrenceville example. Enter a date and local time, s
 
 ## Chart reuse
 
-`astronomy.mjs` returns data without page coordinates. `geometry.mjs` exports `chartGeometry(report, {sparse})` with a local coordinate system, dimensions, named vector groups, individually named traces, phase symbols, marker types, labels and an optional legend. The month/year and coordinates belong to its heading layer. `pages.mjs` places those groups on each sheet and adds page-specific notes, margins and footers. PDF export renders the same SVG page descriptions used by the preview. Plaque export and physical print validation are deferred.
+`astronomy.mjs` returns data without page coordinates. `geometry.mjs` exports `chartGeometry(report, {sparse})` with a local coordinate system, dimensions, named vector groups, individually named traces, phase symbols, marker types, labels and an optional legend. The month/year and coordinates belong to its heading layer. `pages.mjs` places those groups on each sheet and adds page-specific notes, margins and footers. PDF export renders the same SVG page descriptions used by the preview. The Calendar and Artist reference tabs each export the displayed report as a face-up STL in millimeters. The calendar is 194 × 238 mm and the artist card is 150 × 238 mm. Both have a 2.0 mm base and 0.6 mm raised artwork. Use a 0.20 mm first layer and fixed 0.20 mm layers. Slice the STL in Bambu Studio, add one filament change at layer 11 (2.20 mm), and slice again. Downloads are generated locally and are publicly accessible.
 
 ## Checks
 
@@ -43,3 +43,4 @@ The browser tests require installed Google Chrome and Poppler's `pdftoppm` on PA
 
 
 The [reference verification record](VERIFICATION.md) includes the independent PyEphem comparison, the midnight boundary, all displayed differences from the supplied table and reproducibility instructions.
+

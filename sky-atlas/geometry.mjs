@@ -81,8 +81,8 @@ function phaseSymbol(x,y,r,lit,angle) {
   }
   return circ(x,y,r,ink)+`<path d="M ${pts.join(' L ')} Z" fill="white"/>`+circ(x,y,r,'none');
 }
-export function chartLegend(birthDay,shortMonth) {
-  const entries=[['Moonrise',line(0,0,30,0,styles.moonrise)],['Moonset',line(0,0,30,0,styles.moonset)],['Sunrise / sunset',line(0,0,30,0,styles.rise)],['Civil dawn / dusk',line(0,0,30,0,styles.dawn)],['Birth moment',cross(14,0,5)],['New moon',circ(14,0,4.5,ink)],['Lunar phase',phaseSymbol(5,0,4,0,0)+phaseSymbol(16,0,4,50,90)+phaseSymbol(27,0,4,100,180)]];
+export function chartLegend(birthDay,shortMonth,isBirth=true) {
+  const entries=[['Moonrise',line(0,0,30,0,styles.moonrise)],['Moonset',line(0,0,30,0,styles.moonset)],['Sunrise / sunset',line(0,0,30,0,styles.rise)],['Civil dawn / dusk',line(0,0,30,0,styles.dawn)],[isBirth?'Birth moment':'Event moment',cross(14,0,5)],['New moon',circ(14,0,4.5,ink)],['Lunar phase',phaseSymbol(5,0,4,0,0)+phaseSymbol(16,0,4,50,90)+phaseSymbol(27,0,4,100,180)]];
   return group('legend',txt(0,0,'CHART KEY',14,bold)+entries.map(([name,icon],i)=>`<g transform="translate(0 ${32+i*38.5})">${icon}${txt(41,3,name,10.5)}</g>`).join('')+txt(0,314,'SOLAR ANALEMMA',10,bold)+['Horizontal · equation of time','Vertical · solar declination',`Cross · ${shortMonth} ${birthDay} noon sample`].map((s,i)=>txt(0,336+i*17,s,9.5,`fill="${slate}"`)).join(''));
 }
 // Local chart coordinates, independent of sheet dimensions, translation and footer.
@@ -124,6 +124,6 @@ export function chartGeometry(r,{sparse=false}={}) {
   labels+=txt(18,108,'PHASE',10,center+' '+bold)+txt(200,108,'LOCAL TIME  /  '+r.abbrs,10,center+' '+bold)+txt(415,108,'ANALEMMA',10,center+' '+bold)+txt(415,713,r.year+' / 12:00 UTC'+clock,7.8,center+' '+mono);
   const title=[r.monthName.toUpperCase().split('').join(' '),'/',String(r.year).split('').join(' ')].join('    ');
   const heading=txt(0,30,title,r.monthName.length>7?31:37,'font-family="serif" xml:space="preserve"')+txt(0,63,coordinates(input),13,mono+' xml:space="preserve"')+line(0,83,466,83);
-  return {width:466,height:721,layers:{heading:group('heading',heading),axes:group('axes',axes),traces:group('traces',traces),phaseSymbols:group('phase-symbols',icons),labels:group('labels',labels),markers:group('markers',markers),analemma:group('analemma',analemma)},legend:chartLegend(birth.day,r.monthName.slice(0,3))};
+  return {width:466,height:721,layers:{heading:group('heading',heading),axes:group('axes',axes),traces:group('traces',traces),phaseSymbols:group('phase-symbols',icons),labels:group('labels',labels),markers:group('markers',markers),analemma:group('analemma',analemma)},legend:chartLegend(birth.day,r.monthName.slice(0,3),(input.eventType??'Birth')==='Birth')};
 }
 

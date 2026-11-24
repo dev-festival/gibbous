@@ -9,6 +9,8 @@ const placeName=c=>[c.city,c.province,c.country].filter(Boolean).join(', ');
 const tabButtons=[...el('tabs').querySelectorAll('button')];
 function selectPage(n){
   selected=n;
+  el('print-card').hidden=n===2;
+  el('print-status').textContent='';
   [...el('sheets').children].forEach((s,i)=>s.toggleAttribute('hidden',i!==n));
   tabButtons.forEach((b,i)=>i===n?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
   el('pageLabel').textContent=pageNames[n];
@@ -20,7 +22,8 @@ function showReport(input,example=false){
   el('sheets').innerHTML=svgs.join('');
   report=next;
   el('kind').textContent=example?'REFERENCE PREVIEW':'YOUR REPORT';
-  el('reportTitle').textContent=next.monthName+' '+next.year;
+  const month=next.monthName+' '+next.year;
+  el('reportTitle').textContent=input.eventName && input.eventType!=='Birth' ? input.eventName+' · '+month : month;
   selectPage(0);
   el('status').textContent='Three-page report ready for '+input.place+'.';
 }
@@ -62,14 +65,45 @@ for(const id of ['lat','lon','zone']) el(id).oninput=()=>{
   el('place').textContent='Manual coordinates';cityChosen=true;el('city').value='';el('confirm').checked=false;clearResults();details();checkClock();
 };
 for(const id of ['date','time']) el(id).oninput=checkClock;
+const customEvent=el('customEvent');
+el('eventType').onchange=()=>{
+  const custom=el('eventType').value==='Custom';
+  el('customEventField').hidden=!custom;
+  customEvent.disabled=!custom;
+  customEvent.required=custom;
+};
+customEvent.oninput=()=>customEvent.setCustomValidity(
+  customEvent.value && !customEvent.value.trim() ? 'Enter a custom event name.' : ''
+);
 el('form').oninput=()=>{if(report)el('kind').textContent='PREVIOUS PREVIEW';};
 el('form').onsubmit=e=>{
   e.preventDefault();
-  if(!cityChosen){el('error').textContent='Choose a birthplace result or enter coordinates manually.';return;}
+  if(!cityChosen){el('error').textContent='Choose a location result or enter coordinates manually.';return;}
+  const eventType=el('eventType').value;
+  const eventName=eventType==='Custom'?customEvent.value.trim():eventType;
   try{
-    showReport({date:el('date').value,time:el('time').value,zone:el('zone').value,lat:el('lat').valueAsNumber,lon:el('lon').valueAsNumber,place:el('place').textContent,occurrence:el('occurrence').value===''?undefined:Number(el('occurrence').value)});
+    showReport({eventType,eventName,date:el('date').value,time:el('time').value,zone:el('zone').value,lat:el('lat').valueAsNumber,lon:el('lon').valueAsNumber,place:el('place').textContent,occurrence:el('occurrence').value===''?undefined:Number(el('occurrence').value)});
     el('error').textContent='';
   }catch(e){el('error').textContent=e.message||String(e);}
+};
+el('stl').onclick=async()=>{
+  const button=el('stl'), artist=selected===1, date=report.input.date;
+  const svg=el('sheets').children[selected].cloneNode(true);
+  button.disabled=true;
+  el('print-status').textContent='Preparing card…';
+  try {
+    const {cardSTL}=await import('./card.mjs');
+    const blob=await cardSTL(svg,artist);
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='Gibbous-'+date+'-'+(artist?'Artist-Reference':'Calendar')+'.stl';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+    el('print-status').textContent='Card downloaded.';
+  } catch(e) {
+    el('print-status').textContent='Card export failed. '+e.message;
+  } finally { button.disabled=false; }
 };
 el('download').onclick=async()=>{
   const button=el('download'), captured=report;
@@ -78,7 +112,8 @@ el('download').onclick=async()=>{
     const {jsPDF}=await import('jspdf');
     await import('svg2pdf.js');
     const doc=new jsPDF({unit:'pt',format:'letter',compress:true,putOnlyUsedFonts:true});
-    doc.setProperties({title:captured.monthName+' '+captured.year+' | Birth sky atlas',creator:'Gibbous'});
+    const title=[captured.input.eventName,captured.monthName+' '+captured.year,'Gibbous Sky Atlas'].filter(Boolean).join(' | ');
+    doc.setProperties({title,creator:'Gibbous'});
     // Render from the captured report even if the user switches tabs during export.
     const holder=document.createElement('div');holder.style.cssText='position:fixed;left:-5000px;top:0;width:742px;pointer-events:none';
     holder.innerHTML=pages(captured).join('');document.body.append(holder);
@@ -93,6 +128,7 @@ el('download').onclick=async()=>{
   }catch(e){el('error').textContent='PDF export failed: '+(e.message||e);}
   finally{button.disabled=false;}
 };
+el('eventType').onchange();
 setCity(catalog[0]);
 showReport(referenceInput,true);
 

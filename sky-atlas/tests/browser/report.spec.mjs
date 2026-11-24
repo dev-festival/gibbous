@@ -61,3 +61,23 @@ test('manual coordinates generate a polar report with missing events',async({pag
   await expect(page.locator('#sheets > svg').nth(2)).toContainText('—');
 });
 
+test('custom event name appears across the report',async({page})=>{
+  await page.goto('/');
+  const name=page.getByLabel('Custom event name');
+  await expect(name).toBeHidden();
+  await page.getByLabel('Event type').selectOption('Custom');
+  await expect(name).toBeVisible();
+  await expect(name).toHaveAttribute('required','');
+  await name.fill('  First concert & reunion  ');
+  await page.locator('#date').fill('1999-05-20');
+  await page.locator('#time').fill('19:30');
+  await page.getByLabel('Confirm this location').check();
+  await page.getByRole('button',{name:'Generate report'}).click();
+  await expect(page.locator('#reportTitle')).toHaveText('First concert & reunion · May 1999');
+  await expect(page.locator('#sheets text').filter({hasText:/^First concert & reunion$/})).toHaveCount(3);
+  await expect(page.locator('#sheets text').filter({hasText:/^Event moment$/})).toHaveCount(1);
+  await page.getByLabel('Event type').selectOption('Wedding');
+  await expect(name).toBeHidden();
+  await page.getByRole('button',{name:'Generate report'}).click();
+  await expect(page.locator('#reportTitle')).toHaveText('Wedding · May 1999');
+});

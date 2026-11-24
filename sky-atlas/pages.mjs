@@ -9,6 +9,7 @@ function footer(i){
 function calendar(r,sparse) {
   const chart=chartGeometry(r,{sparse});
   let s=`<g transform="translate(${sparse?145:72} 60)">${Object.values(chart.layers).join('')}</g>`;
+  if(r.input.eventName) s+=txt(sparse?145:72,sparse?810:790,r.input.eventName,11,bold);
   if(!sparse){
     const b=r.birth;
     s+=`<g transform="translate(552 203)">${chart.legend}</g>`;
@@ -20,6 +21,7 @@ function calendar(r,sparse) {
 const deg=n=>(n>=0?'+':'')+n.toFixed(1)+'°';
 function sourcePage(r) {
   const short=r.monthName.slice(0,3).toUpperCase(),b=r.birth,i=r.input;
+  const moment=(i.eventType??'Birth')==='Birth'?'Birth':'Event';
   let s=txt(66,66,r.monthName.toUpperCase()+' '+r.year+'  /  SOURCE DATA',27,'font-family="serif"');
   s+=txt(66,94,'Daily horizon events in '+r.abbrs+'  ·  Phase illumination sampled at 12:00 local',11,`fill="${slate}"`);
   const cols=[67,135,220,307,393,478,565,655];
@@ -33,7 +35,8 @@ function sourcePage(r) {
     values.forEach((v,j)=>s+=txt(cols[j],y,v,v.length>8?7.8:9.5,mono+(j?' '+center:'')));
   }
   s+=txt(67,613,'PRIMARY PHASES  /  '+r.abbrs,11,bold);
-  s+=txt(372,613,'BIRTH MOMENT  /  '+new Date(b.ms).toISOString().slice(11,16)+' UTC',11,bold);
+  s+=txt(372,613,moment.toUpperCase()+' MOMENT  /  '+new Date(b.ms).toISOString().slice(11,16)+' UTC',11,bold);
+  if(i.eventName) s+=txt(67,694,i.eventName,11,bold);
   r.phases.forEach((p,j)=>s+=txt(67,631+j*15,pad(p.day)+' '+short+'  '+p.time+'   '+p.name,10,mono+' xml:space="preserve"'));
   const snap=['Sun   '+deg(b.sun.alt)+' altitude  /  '+b.sun.az.toFixed(1)+'° azimuth','Moon  '+deg(b.moon.alt)+' altitude  /  '+b.moon.az.toFixed(1)+'° azimuth',b.lit.toFixed(1)+'% illuminated  /  '+b.name.toLowerCase(),new Date(b.ms).toISOString().replace('T',' ').replace('.000Z',' UTC')];
   snap.forEach((a,j)=>s+=txt(372,631+j*15,a,10,mono+' xml:space="preserve"'));
@@ -41,8 +44,8 @@ function sourcePage(r) {
     'Astronomy Engine 2.1.19  ·  IANA zone '+i.zone+'  ·  sea-level, unobstructed horizon.',
     'Rise/set: upper limb, standard refraction (34 arcmin). Civil twilight: geometric solar center at -6°.',
     'Snapshot: geometric topocentric altitude; azimuth clockwise from north. Illumination: apparent disk fraction.',
-    'Phase symbols: local noon, birth instant on birth day, conjunction on new-moon days.',
-    isNew(b.day)?'Both symbols on birth row: new moon at left, birth disk at right. Dot = conjunction; cross = birth.':'Cross marks birth; dots mark conjunctions. Curves break at missing events and midnight wraps.',
+    'Phase symbols: local noon, selected instant on the event date, conjunction on new-moon days.',
+    isNew(b.day)?'Both symbols on the event row: new moon at left, selected instant at right.':'The cross marks the selected instant. Dots mark conjunctions. Curves break at missing events and midnight wraps.',
     'Analemma: equation of time (minutes) vs. solar declination (degrees); noon at fixed Jan 1 standard offset.',
     'Events are assigned before rounding to minutes. + means rounded into next day; a dash means no event/sample.',
     ...(r.days.some(row=>Object.values(row.events).flat().some(ev=>ev.offsetMinutes!==b.offsetMinutes))
@@ -54,7 +57,7 @@ function sourcePage(r) {
       : ['1989-09-01','1989-10-13'].includes(i.date) && i.time==='07:15' && i.zone==='America/New_York'
           && i.lat===33.83001385 && i.lon===-84.39994938
         ? [`PyEphem 4.2.1: all ${i.date==='1989-09-01'?178:184} horizon times matched to the minute. Four primary phases agreed within 47 seconds.`]
-        : ['Independent source comparison has not been run for these birth details.'])
+        : ['Independent source comparison has not been run for these event details.'])
   ];
   notes.forEach((n,j)=>s+=txt(67,713+j*14,n,9.6,`fill="${slate}"`));
   return s;

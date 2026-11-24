@@ -12,6 +12,8 @@
   "dependencies": {
     "astronomy-engine": "^2.1.19",
     "city-timezones": "^1.3.4",
+    "d3-contour": "^4.0.3",
+    "earcut": "^3.2.4",
     "jspdf": "^4.2.1",
     "moment-timezone": "^0.6.6",
     "svg2pdf.js": "^2.9.0"
