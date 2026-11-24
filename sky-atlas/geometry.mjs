@@ -73,7 +73,7 @@ function eventTrace(days,key,x,y) {
   flush();
   return `<path data-trace="${key}" d="${path}" stroke="${ink}" fill="none" ${styles[key]}/>`+dots;
 }
-function phaseSymbol(x,y,r,lit,angle) {
+export function phaseSymbol(x,y,r,lit,angle) {
   const sign=angle<180?1:-1, boundary=1-2*lit/100, pts=[];
   for(const side of [1,0]) for(let j=0;j<=32;j++){
     const a=-Math.PI/2+Math.PI*(side?j:32-j)/32;

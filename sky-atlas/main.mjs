@@ -1,11 +1,18 @@
 import {calculate,referenceInput,possibleInstants,local,zones} from './astronomy.mjs';
 import {pages,pageNames} from './pages.mjs';
 import {coordinates} from './geometry.mjs';
+import {startBanner} from './banner.mjs';
 import cities from 'city-timezones/data/cityMap.json';
 const el=id=>document.getElementById(id);
 let report, selected=0, cityChosen=true, matchButtons=[];
 const catalog=[{city:'Lawrenceville',province:'Georgia',country:'USA',lat:referenceInput.lat,lng:referenceInput.lon,timezone:referenceInput.zone},...cities.filter(c=>zones.includes(c.timezone))];
 const placeName=c=>[c.city,c.province,c.country].filter(Boolean).join(', ');
+function findCities(query) {
+  const q=query.trim().toLowerCase(), terms=q.split(/[\s,]+/).filter(Boolean);
+  if(!terms.length)return [];
+  return catalog.filter(c=>terms.every(t=>(placeName(c)+' '+c.city_ascii+' '+c.iso2).toLowerCase().includes(t))).sort((a,b)=>Number(b.city.toLowerCase()===q)-Number(a.city.toLowerCase()===q)||(b.pop||0)-(a.pop||0)).slice(0,12);
+}
+startBanner(findCities,placeName);
 const tabButtons=[...el('tabs').querySelectorAll('button')];
 function selectPage(n){
   selected=n;
@@ -53,8 +60,7 @@ el('city').oninput=()=>{
   clearResults();
   const q=el('city').value.trim().toLowerCase();
   if(!q)return;
-  const terms=q.split(/[\s,]+/).filter(Boolean);
-  const matches=catalog.filter(c=>terms.every(t=>(placeName(c)+' '+c.city_ascii+' '+c.iso2).toLowerCase().includes(t))).sort((a,b)=>Number(b.city.toLowerCase()===q)-Number(a.city.toLowerCase()===q)||(b.pop||0)-(a.pop||0)).slice(0,12);
+  const matches=findCities(q);
   for(const c of matches){
     const b=document.createElement('button');b.type='button';b.textContent=placeName(c);b.onclick=()=>setCity(c);matchButtons.push(b);el('matches').append(b);
   }

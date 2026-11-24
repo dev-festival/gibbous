@@ -23,7 +23,7 @@ function stamp(ms, zone) {
   const dayShift = rounded.format('YYYYMMDD') !== civil.format('YYYYMMDD');
   return {ms,day:civil.date(),offsetMinutes:civil.utcOffset(),time:rounded.format('HH:mm')+(dayShift?'+':''),hour:civil.hour()+civil.minute()/60+(civil.second()+civil.millisecond()/1000)/3600};
 }
-function lunar(ms) {
+export function lunar(ms) {
   const t = new Date(ms);
   // Apparent geocentric Sun and Moon vectors form the Sun-Moon-observer triangle.
   const sun=A.GeoVector('Sun',t,true), moon=A.GeoVector('Moon',t,true);
@@ -32,7 +32,7 @@ function lunar(ms) {
   const phase=A.AngleBetween(toSun,toEarth)*Math.PI/180;
   return {lit:50*(1+Math.cos(phase)), angle:A.MoonPhase(t)};
 }
-function phaseName(angle) {
+export function phaseName(angle) {
   for(let i=0;i<4;i++) if(Math.abs((angle-i*90+540)%360-180)<0.25) return phaseNames[i];
   return ['Waxing crescent','Waxing gibbous','Waning gibbous','Waning crescent'][Math.floor(angle/90)];
 }
